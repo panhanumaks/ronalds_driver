@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "telegram-bot", // The name of your app
-      script: "./index.js", // The script to run
+      script: "./app.js", // The script to run
       instances: 1, // Number of instances to run (1 for single instance)
       exec_mode: "fork", // 'fork' for single instance, 'cluster' for multiple
       watch: true, // Restart the app if a file changes
