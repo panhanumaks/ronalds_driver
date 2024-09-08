@@ -11,13 +11,13 @@ module.exports = {
       env: {
         // Default environment variables
         NODE_ENV: "development",
-        PORT: 3000,
+        PORT: 4000,
         BOT_TOKEN: "7138446706:AAHzQWn13YC3PRyO3S6jLbUq8z_NpwWAJqs", // Add your bot token here
       },
       env_production: {
         // Production environment variables
         NODE_ENV: "production",
-        PORT: 8080,
+        PORT: 4000,
         BOT_TOKEN: "7138446706:AAHzQWn13YC3PRyO3S6jLbUq8z_NpwWAJqs", // Add your bot token here
       },
     },
