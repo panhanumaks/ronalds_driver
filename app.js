@@ -1,6 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
-import companyList from "./company-list.json";
+import companyList from "./company-list.json" assert { type: "json" };
 
 const app = express();
 const PORT = process.env.PORT;
