@@ -3,9 +3,6 @@ import moment from "moment";
 import { sendMessage, sendMessageWithButtons } from "./telegramService.js";
 import {
   isWeekend,
-  calculateOvertimeWeekday,
-  calculateOvertimeWeekend,
-  isAfterSevenPM,
   calculateOvertime,
 } from "../utils/overtimeUtils.js";
 import { COMMAND_UTILS, handleCommandUpdate } from "./commandService.js";
@@ -91,7 +88,7 @@ export async function handleCheckOut(chat_id) {
 
 export async function handleRecapInformation(chat_id) {
   const query = `
-    SELECT date, check_in_time, check_out_time, absence_reason, absence_phone_call, overtime_hours FROM recaps WHERE chat_id = ? ORDER BY date DESC LIMIT 1
+    SELECT date, check_in_time, check_out_time, absence_reason, absence_phone_call, overtime_hours FROM recaps WHERE chat_id = ? ORDER BY date DESC LIMIT 2
   `;
   const [rows] = await db.connection.query(query, [chat_id]);
 

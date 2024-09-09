@@ -6,16 +6,15 @@ import {
   handleCommand,
   handleCallbackQuery,
 } from "../services/commandService.js";
+import { getAllChatIds } from "../services/userService.js";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
 const uploadDir = "./uploads/";
 
-// Create upload directory if it doesn't exist
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Function to download the photo from Telegram server
 const downloadPhoto = async (fileId) => {
   try {
     const filePathRes = await axios.get(
@@ -47,7 +46,6 @@ const downloadPhoto = async (fileId) => {
   }
 };
 
-// Function to delete photos older than 3 days
 const deleteOldPhotos = () => {
   const now = Date.now();
   const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
@@ -80,10 +78,6 @@ const deleteOldPhotos = () => {
   });
 };
 
-// Schedule the deletion of old photos every day at midnight
-cron.schedule("0 0 * * *", deleteOldPhotos);
-
-// Function to handle incoming Telegram webhook events
 export const handleWebhook = async (req, res) => {
   try {
     const { message, callback_query } = req.body;
@@ -98,7 +92,7 @@ export const handleWebhook = async (req, res) => {
         const fileId = message.photo[message.photo.length - 1].file_id;
 
         const photoName = await downloadPhoto(fileId);
-        const imageUrl = `${process.env.YOUR_BASE_URL}/uploads/${photoName}`;
+        const imageUrl = `https://${req.get("host")}/uploads/${photoName}`;
 
         await handleCommand(chat_id, message.text || "", imageUrl);
       } else if (message.text) {
@@ -114,7 +108,6 @@ export const handleWebhook = async (req, res) => {
   }
 };
 
-// Function to set the Telegram webhook
 export const setWebhook = async (req, res) => {
   try {
     const webhookUrl = `https://${req.get("host")}/webhook/${
@@ -130,3 +123,25 @@ export const setWebhook = async (req, res) => {
     res.sendStatus(500);
   }
 };
+
+cron.schedule("0 0 * * *", deleteOldPhotos);
+
+cron.schedule(
+  "0 6 * * *",
+  async () => {
+    try {
+      const chatIds = await getAllChatIds();
+
+      for (const chat_id of chatIds) {
+        const message = "/start";
+
+        await handleCommand(chat_id, message);
+      }
+    } catch (error) {
+      console.error("Error in sending messages:", error);
+    }
+  },
+  {
+    timezone: "Asia/Jakarta", // Ensure it runs in WIB timezone
+  }
+);

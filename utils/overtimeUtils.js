@@ -3,50 +3,31 @@ export function isWeekend() {
   return day === 6 || day === 0;
 }
 
-export function isAfterSevenPM(checkOutTime) {
-  const [hours] = checkOutTime.split(":");
-  return parseInt(hours) >= 19;
-}
-
-export function calculateOvertimeWeekday(checkOutTime) {
-  const [hours, minutes] = checkOutTime.split(":").map(Number);
-  let overtimeHours = hours - 19;
-  if (minutes > 30) {
-    overtimeHours += 1;
-  }
-  return overtimeHours;
-}
-
-export function calculateOvertimeWeekend(checkOutTime) {
-  const [hours, minutes] = checkOutTime.split(":").map(Number);
-  let overtimeHours = hours;
-  if (minutes > 30) {
-    overtimeHours += 1;
-  }
-  return overtimeHours;
-}
-
-export function calculateOvertime(checkInTime, checkOutTime) {
+export function calculateOvertime(checkInTime, checkOutTime, dayOfWeek) {
   const [checkInHour, checkInMinute] = checkInTime.split(":").map(Number);
   const [checkOutHour, checkOutMinute] = checkOutTime.split(":").map(Number);
 
-  const overtimeStartHour = 19;
+  const workHoursLimit = 10;
+  const normalWorkDuration = workHoursLimit * 60;
 
+  const checkInTotalMinutes = checkInHour * 60 + checkInMinute;
+  const checkOutTotalMinutes = checkOutHour * 60 + checkOutMinute;
+
+  let totalWorkMinutes = checkOutTotalMinutes - checkInTotalMinutes;
   let overtimeMinutes = 0;
 
-  if (checkOutHour >= overtimeStartHour) {
-    if (checkInHour < overtimeStartHour) {
-      overtimeMinutes =
-        checkOutHour * 60 + checkOutMinute - overtimeStartHour * 60;
-    } else {
-      overtimeMinutes =
-        checkOutHour * 60 + checkOutMinute - (checkInHour * 60 + checkInMinute);
+  if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+    if (totalWorkMinutes > normalWorkDuration) {
+      overtimeMinutes = totalWorkMinutes - normalWorkDuration;
     }
+  } else if (dayOfWeek === 6 || dayOfWeek === 0) {
+    overtimeMinutes = totalWorkMinutes;
   }
 
   let overtimeHours = Math.floor(overtimeMinutes / 60);
-  if (overtimeMinutes % 60 > 30) {
-    overtimeHours += 1;
+  const remainingMinutes = overtimeMinutes % 60;
+  if (remainingMinutes > 0) {
+    overtimeHours += Math.ceil(remainingMinutes / 15);
   }
 
   return overtimeHours;
