@@ -10,43 +10,51 @@ import {
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
 const uploadDir = "./uploads/";
 
+// Create upload directory if it doesn't exist
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
+// Function to download the photo from Telegram server
 const downloadPhoto = async (fileId) => {
-  const filePathRes = await axios.get(
-    `${TELEGRAM_API}/getFile?file_id=${fileId}`
-  );
-  const filePath = filePathRes.data.result.file_path;
-  const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
+  try {
+    const filePathRes = await axios.get(
+      `${TELEGRAM_API}/getFile?file_id=${fileId}`
+    );
+    const filePath = filePathRes.data.result.file_path;
+    const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
 
-  const photoName = path.basename(filePath);
-  const photoPath = path.join(uploadDir, photoName);
+    const photoName = path.basename(filePath);
+    const photoPath = path.join(uploadDir, photoName);
 
-  const photoRes = await axios({
-    url: fileUrl,
-    method: "GET",
-    responseType: "stream",
-  });
+    const photoRes = await axios({
+      url: fileUrl,
+      method: "GET",
+      responseType: "stream",
+    });
 
-  await new Promise((resolve, reject) => {
-    const writer = fs.createWriteStream(photoPath);
-    photoRes.data.pipe(writer);
-    writer.on("finish", resolve);
-    writer.on("error", reject);
-  });
+    await new Promise((resolve, reject) => {
+      const writer = fs.createWriteStream(photoPath);
+      photoRes.data.pipe(writer);
+      writer.on("finish", resolve);
+      writer.on("error", reject);
+    });
 
-  return photoName;
+    return photoName;
+  } catch (error) {
+    console.error("Error downloading photo:", error);
+    throw error;
+  }
 };
 
+// Function to delete photos older than 3 days
 const deleteOldPhotos = () => {
   const now = Date.now();
   const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
 
   fs.readdir(uploadDir, (err, files) => {
     if (err) {
-      console.error("Error reading upload directory", err);
+      console.error("Error reading upload directory:", err);
       return;
     }
 
@@ -54,14 +62,14 @@ const deleteOldPhotos = () => {
       const filePath = path.join(uploadDir, file);
       fs.stat(filePath, (err, stats) => {
         if (err) {
-          console.error("Error getting file stats", err);
+          console.error("Error getting file stats:", err);
           return;
         }
 
         if (stats.mtimeMs < threeDaysAgo) {
           fs.unlink(filePath, (err) => {
             if (err) {
-              console.error("Error deleting file", err);
+              console.error("Error deleting file:", err);
             } else {
               console.log(`Deleted old photo: ${file}`);
             }
@@ -72,41 +80,53 @@ const deleteOldPhotos = () => {
   });
 };
 
+// Schedule the deletion of old photos every day at midnight
 cron.schedule("0 0 * * *", deleteOldPhotos);
 
+// Function to handle incoming Telegram webhook events
 export const handleWebhook = async (req, res) => {
-  const { message, callback_query } = req.body;
+  try {
+    const { message, callback_query } = req.body;
 
-  if (callback_query && callback_query.data) {
-    const chat_id = callback_query.from.id;
-    await handleCallbackQuery(chat_id, callback_query.data);
-  } else if (message) {
-    const chat_id = message.chat.id;
+    if (callback_query && callback_query.data) {
+      const chat_id = callback_query.from.id;
+      await handleCallbackQuery(chat_id, callback_query.data);
+    } else if (message) {
+      const chat_id = message.chat.id;
 
-    if (message.photo && message.photo.length > 0) {
-      const fileId = message.photo[message.photo.length - 1].file_id;
+      if (message.photo && message.photo.length > 0) {
+        const fileId = message.photo[message.photo.length - 1].file_id;
 
-      const photoName = await downloadPhoto(fileId);
-      const imageUrl = `${process.env.YOUR_BASE_URL}/uploads/${photoName}`;
+        const photoName = await downloadPhoto(fileId);
+        const imageUrl = `${process.env.YOUR_BASE_URL}/uploads/${photoName}`;
 
-      await handleCommand(chat_id, message.text || "", imageUrl);
-    } else if (message.text) {
-      const text = message.text;
-      await handleCommand(chat_id, text);
+        await handleCommand(chat_id, message.text || "", imageUrl);
+      } else if (message.text) {
+        const text = message.text;
+        await handleCommand(chat_id, text);
+      }
     }
-  }
 
-  res.sendStatus(200);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("Error handling webhook:", error);
+    res.sendStatus(500);
+  }
 };
 
+// Function to set the Telegram webhook
 export const setWebhook = async (req, res) => {
-  const webhookUrl = `https://${req.get("host")}/webhook/${
-    process.env.BOT_TOKEN
-  }`;
-  await fetch(`${TELEGRAM_API}/setWebhook`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: webhookUrl }),
-  });
-  res.send("Webhook has been set");
+  try {
+    const webhookUrl = `https://${req.get("host")}/webhook/${
+      process.env.BOT_TOKEN
+    }`;
+    await axios.post(`${TELEGRAM_API}/setWebhook`, {
+      url: webhookUrl,
+    });
+
+    res.send("Webhook has been set");
+  } catch (error) {
+    console.error("Error setting webhook:", error);
+    res.sendStatus(500);
+  }
 };

@@ -9,6 +9,7 @@ import {
   calculateOvertime,
 } from "../utils/overtimeUtils.js";
 import { COMMAND_UTILS, handleCommandUpdate } from "./commandService.js";
+import { openTools } from "../utils/buttons.js";
 
 export async function handleCheckIn(chat_id) {
   const currentDate = moment().format("YYYY-MM-DD");
