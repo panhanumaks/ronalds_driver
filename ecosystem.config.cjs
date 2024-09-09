@@ -8,6 +8,7 @@ module.exports = {
       watch: true,
       ignore_watch: ["node_modules"],
       max_memory_restart: "500M",
+      node_args: "--experimental-json-modules",
       env: {
         NODE_ENV: "development",
         PORT: 4000,
