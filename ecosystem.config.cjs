@@ -2,12 +2,14 @@ module.exports = {
   apps: [
     {
       name: "telegram-bot",
-      script: "./app.js",
+      script: "nodemon",
+      args: "app.js",
+      interpreter: "node",
       instances: 1,
       exec_mode: "fork",
       watch: true,
       ignore_watch: ["node_modules"],
-      max_memory_restart: "2G",
+      max_memory_restart: "500M",
       node_args: "--experimental-json-modules",
       env: {
         NODE_ENV: "development",
