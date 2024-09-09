@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "telegram-bot",
       script: "./app.js",
-      instances: 2,
+      instances: 1,
       exec_mode: "fork",
       watch: true,
       ignore_watch: ["node_modules"],
@@ -26,6 +26,8 @@ module.exports = {
         DB_PASSWORD: "Akasia!23",
         DB_NAME: "botdriver_prod",
       },
+      interpreter: "nodemon",
+      interpreter_args: "app.js",
     },
   ],
 };
