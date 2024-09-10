@@ -84,6 +84,15 @@ export const handleWebhook = async (req, res) => {
 
     if (callback_query && callback_query.data) {
       const chat_id = callback_query.from.id;
+
+      const user = await findUserByChatId(chat_id);
+      if (user.length > 0 && user[0].is_blocked) {
+        sendMessage(
+          chat_id,
+          "Maaf, akun anda telah diblokir, Hubungi Admin untuk detail lebih lanjut."
+        );
+        res.sendStatus(200);
+      }
       await handleCallbackQuery(chat_id, callback_query.data);
 
       // stop loading
