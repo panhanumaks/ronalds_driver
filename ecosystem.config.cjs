@@ -5,7 +5,7 @@ module.exports = {
       script: "./app.js",
       instances: 1,
       exec_mode: "fork",
-      watch: true,
+      watch: false,
       ignore_watch: ["node_modules"],
       max_memory_restart: "500M",
       env: {
