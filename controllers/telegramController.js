@@ -91,7 +91,7 @@ export const handleWebhook = async (req, res) => {
           chat_id,
           "Maaf, akun anda telah diblokir, Hubungi Admin untuk detail lebih lanjut."
         );
-        res.sendStatus(200);
+        return res.sendStatus(200);
       }
       await handleCallbackQuery(chat_id, callback_query.data);
 
