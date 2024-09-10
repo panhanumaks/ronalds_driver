@@ -91,14 +91,9 @@ export const handleWebhook = async (req, res) => {
           chat_id,
           "Maaf, akun anda telah diblokir, Hubungi Admin untuk detail lebih lanjut."
         );
-        return await axios.post(
-          `https://api.telegram.org/bot${process.env.BOT_TOKEN}/answerCallbackQuery`,
-          {
-            callback_query_id: callback_query.id,
-          }
-        );
+      } else {
+        await handleCallbackQuery(chat_id, callback_query.data);
       }
-      await handleCallbackQuery(chat_id, callback_query.data);
 
       // stop loading
       await axios.post(
