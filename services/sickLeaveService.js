@@ -9,7 +9,7 @@ export async function handleSickLeaveAdditional(chat_id, reason) {
   const currentDate = moment().format("YYYY-MM-DD");
 
   const checkExistingQuery = `
-    SELECT * FROM recaps WHERE chat_id = ? AND date = ? AND (check_in_time IS NOT NULL OR check_out_time IS NOT NULL)
+    SELECT * FROM recaps WHERE chat_id = ? AND date = ?
   `;
   const [existingRows] = await db.connection.query(checkExistingQuery, [
     chat_id,
@@ -40,6 +40,15 @@ export async function handleSickLeaveAdditionalAdv(chat_id, phoneNumber) {
       "Nomor telepon tidak valid. Silakan coba lagi."
     );
   }
+
+  const query = `
+    UPDATE recaps SET absence_phone_call = ?, updated_at = NOW()
+    WHERE chat_id = ? AND date = ?
+  `;
+
+  const currentDate = moment().format("YYYY-MM-DD");
+
+  await db.connection.query(query, [phoneNumber, chat_id, currentDate]);
 
   sendMessage(chat_id, "Pesan ke atasan sudah terkirim, Terima Kasih!");
   await handleCommandUpdate(chat_id, "");

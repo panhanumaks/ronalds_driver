@@ -1,10 +1,7 @@
 import { db } from "../config/db.js";
 import moment from "moment";
 import { sendMessage, sendMessageWithButtons } from "./telegramService.js";
-import {
-  isWeekend,
-  calculateOvertime,
-} from "../utils/overtimeUtils.js";
+import { isWeekend, calculateOvertime } from "../utils/overtimeUtils.js";
 import { COMMAND_UTILS, handleCommandUpdate } from "./commandService.js";
 import { openTools } from "../utils/buttons.js";
 
@@ -100,7 +97,7 @@ export async function handleRecapInformation(chat_id) {
           "DD MMMM YYYY"
         )}\nAlasan Izin: ${row.absence_reason || "N/A"}\nNo. Telp Atasan: ${
           row.absence_phone_call || "N/A"
-        }`;
+        }\n\n`;
       } else {
         recapMessage += `Tanggal: ${moment(row.date).format(
           "DD MMMM YYYY"
