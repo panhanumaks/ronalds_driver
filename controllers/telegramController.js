@@ -85,6 +85,14 @@ export const handleWebhook = async (req, res) => {
     if (callback_query && callback_query.data) {
       const chat_id = callback_query.from.id;
       await handleCallbackQuery(chat_id, callback_query.data);
+
+      // stop loading
+      await axios.post(
+        `https://api.telegram.org/bot${process.env.BOT_TOKEN}/answerCallbackQuery`,
+        {
+          callback_query_id: callback_query.id,
+        }
+      );
     } else if (message) {
       const chat_id = message.chat.id;
 

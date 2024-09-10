@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Management</title>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: center;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+      button {
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>User Management</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Chat ID</th>
+          <th>Full Name</th>
+          <th>Company Name</th>
+          <th>Blocked Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+        <tr>
+          <td><%= user.chat_id %></td>
+          <td><%= user.full_name %></td>
+          <td><%= user.company_name %></td>
+          <td><%= user.is_blocked ? 'Blocked' : 'Active' %></td>
+          <td style="width: 200px;">
+            <% if (user.is_blocked) { %>
+            <form
+              action="/users/<%= user.id %>/unblock"
+              method="POST"
+              style="display: inline"
+            >
+              <button type="submit">Unblock</button>
+            </form>
+            <% } else { %>
+            <form
+              action="/users/<%= user.id %>/block"
+              method="POST"
+              style="display: inline"
+            >
+              <button type="submit">Block</button>
+            </form>
+            <% } %>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </body>
+</html>

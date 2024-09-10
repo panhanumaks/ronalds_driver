@@ -22,3 +22,44 @@ export const getAllChatIds = async () => {
     return [];
   }
 };
+
+export const getAllUsers = async () => {
+  const [rows] = await db.connection.execute(
+    "SELECT * FROM users"
+  );
+  return rows;
+};
+
+// Get a user by ID
+export const getUserById = async (id) => {
+  const [rows] = await db.connection.execute("SELECT * FROM users WHERE id = ?", [id]);
+  return rows[0];
+};
+
+// Update a user
+export const updateUser = async (id, data) => {
+  const { full_name, company_name, is_blocked } = data;
+  const [result] = await db.connection.execute(
+    "UPDATE users SET full_name = ?, company_name = ?, is_blocked = ? WHERE id = ?",
+    [full_name, company_name, is_blocked, id]
+  );
+  return result.affectedRows > 0 ? await getUserById(id) : null;
+};
+
+// Block a user
+export const blockUser = async (id) => {
+  const [result] = await db.connection.execute(
+    "UPDATE users SET is_blocked = 1 WHERE id = ?",
+    [id]
+  );
+  return result.affectedRows > 0 ? await getUserById(id) : null;
+};
+
+// Unblock a user
+export const unblockUser = async (id) => {
+  const [result] = await db.connection.execute(
+    "UPDATE users SET is_blocked = 0 WHERE id = ?",
+    [id]
+  );
+  return result.affectedRows > 0 ? await getUserById(id) : null;
+};

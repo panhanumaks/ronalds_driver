@@ -53,6 +53,11 @@ export async function handleCommand(chat_id, text, imageUrl = null) {
         ]);
       }
     }
+  } else if (user[0].is_blocked) {
+    sendMessage(
+      chat_id,
+      "Maaf, akun anda telah diblokir, Hubungi Admin untuk detail lebih lanjut."
+    );
   } else if (text.includes("/start")) {
     sendMessageWithButtons(
       chat_id,
