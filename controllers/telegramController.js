@@ -6,7 +6,7 @@ import {
   handleCommand,
   handleCallbackQuery,
 } from "../services/commandService.js";
-import { getAllChatIds } from "../services/userService.js";
+import { findUserByChatId, getAllChatIds } from "../services/userService.js";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
 const uploadDir = "./uploads/";
