@@ -89,7 +89,7 @@ export async function handleCheckOut(chat_id) {
 
 export async function handleRecapInformation(chat_id) {
   const query = `
-    SELECT date, check_in_time, check_out_time, absence_reason, absence_phone_call, overtime_hours FROM recaps WHERE chat_id = ? ORDER BY date DESC LIMIT 2
+    SELECT date, check_in_time, check_out_time, absence_reason, absence_email, overtime_hours FROM recaps WHERE chat_id = ? ORDER BY date DESC LIMIT 2
   `;
   const [rows] = await db.connection.query(query, [chat_id]);
 
@@ -99,8 +99,8 @@ export async function handleRecapInformation(chat_id) {
       if (row.absence_reason) {
         recapMessage += `Tanggal: ${moment(row.date).format(
           "DD MMMM YYYY"
-        )}\nAlasan Izin: ${row.absence_reason || "N/A"}\nNo. Telp Atasan: ${
-          row.absence_phone_call || "N/A"
+        )}\nAlasan Izin: ${row.absence_email || "N/A"}\nEmail Atasan: ${
+          row.absebce_email || "N/A"
         }\n\n`;
       } else {
         recapMessage += `Tanggal: ${moment(row.date).format(

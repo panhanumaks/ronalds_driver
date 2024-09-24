@@ -2,8 +2,9 @@ import { db } from "../config/db.js";
 import { sendMessage } from "./telegramService.js";
 import { handleCommandUpdate } from "./commandService.js";
 import { COMMAND_UTILS } from "./commandService.js";
+import { validateEmail } from "../utils/validationUtils.js";
 import moment from "moment";
-import { validatePhoneNumber } from "../utils/validationUtils.js";
+import { sendEmailToAtasan } from "./nodemailerService.js";
 
 export async function handleSickLeaveAdditional(chat_id, reason) {
   const currentDate = moment().format("YYYY-MM-DD");
@@ -29,27 +30,35 @@ export async function handleSickLeaveAdditional(chat_id, reason) {
   `;
   await db.connection.query(query, [chat_id, currentDate, 1, reason]);
 
-  sendMessage(chat_id, "Silakan masukkan nomor telepon atasan Anda.");
+  sendMessage(chat_id, "Silakan masukkan email atasan Anda.");
   await handleCommandUpdate(chat_id, COMMAND_UTILS.SICK_LEAVE_ADV);
 }
 
-export async function handleSickLeaveAdditionalAdv(chat_id, phoneNumber) {
-  if (!validatePhoneNumber(phoneNumber)) {
-    return sendMessage(
-      chat_id,
-      "Nomor telepon tidak valid. Silakan coba lagi."
-    );
+export async function handleSickLeaveAdditionalAdv(chat_id, email) {
+  if (!validateEmail(email)) {
+    return sendMessage(chat_id, "Email tidak valid. Silakan coba lagi.");
   }
 
   const query = `
-    UPDATE recaps SET absence_phone_call = ?, updated_at = NOW()
+    UPDATE recaps SET absence_email = ?, updated_at = NOW()
     WHERE chat_id = ? AND date = ?
   `;
 
   const currentDate = moment().format("YYYY-MM-DD");
 
-  await db.connection.query(query, [phoneNumber, chat_id, currentDate]);
+  await db.connection.query(query, [email, chat_id, currentDate]);
 
+  const queryGet = `
+    SELECT r.*, u.full_name, u.company_name 
+    FROM recaps r
+    LEFT JOIN users u ON r.chat_id = u.chat_id
+    WHERE r.chat_id = ? AND r.date = ?
+  `;
+
+  const [rows] = await db.connection.query(queryGet, [chat_id, currentDate]);
+  const data = rows[0];
+  console.log(data)
+  await sendEmailToAtasan(email, data.full_name, data.absence_reason);
   sendMessage(chat_id, "Pesan ke atasan sudah terkirim, Terima Kasih!");
   await handleCommandUpdate(chat_id, "");
 }
