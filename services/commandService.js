@@ -1,6 +1,6 @@
 import { findUserByChatId, insertUser } from "./userService.js";
 import { isCompanyVerified } from "../utils/verifyCompany.js";
-import { toolButtons, openTools } from "../utils/buttons.js";
+import { toolButtons } from "../utils/buttons.js";
 import { sendMessage, sendMessageWithButtons } from "./telegramService.js";
 import {
   handleCheckIn,

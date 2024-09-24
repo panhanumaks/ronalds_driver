@@ -24,15 +24,16 @@ export const getAllChatIds = async () => {
 };
 
 export const getAllUsers = async () => {
-  const [rows] = await db.connection.execute(
-    "SELECT * FROM users"
-  );
+  const [rows] = await db.connection.execute("SELECT * FROM users");
   return rows;
 };
 
 // Get a user by ID
 export const getUserById = async (id) => {
-  const [rows] = await db.connection.execute("SELECT * FROM users WHERE id = ?", [id]);
+  const [rows] = await db.connection.execute(
+    "SELECT * FROM users WHERE id = ?",
+    [id]
+  );
   return rows[0];
 };
 
@@ -62,4 +63,26 @@ export const unblockUser = async (id) => {
     [id]
   );
   return result.affectedRows > 0 ? await getUserById(id) : null;
+};
+
+export const getRecapsWithCheckInTime = async () => {
+  const query = `
+          SELECT * FROM recaps 
+          WHERE check_in_time IS NOT NULL 
+          AND check_in_image IS NULL
+          AND TIMESTAMPDIFF(MINUTE, check_in_time, NOW()) > 10;
+      `;
+  const [rows] = await db.connection.query(query);
+  return rows;
+};
+
+export const getRecapsWithCheckOutTime = async () => {
+  const query = `
+          SELECT * FROM recaps 
+          WHERE check_out_time IS NOT NULL 
+          AND check_out_image IS NULL
+          AND TIMESTAMPDIFF(MINUTE, check_out_time, NOW()) > 10;
+      `;
+  const [rows] = await db.connection.query(query);
+  return rows;
 };

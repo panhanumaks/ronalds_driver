@@ -1,9 +1,13 @@
+import ExcelJS from "exceljs";
+import fs from "fs";
+import path from "path";
 import { db } from "../config/db.js";
 import moment from "moment";
 import { sendMessage, sendMessageWithButtons } from "./telegramService.js";
 import { isWeekend, calculateOvertime } from "../utils/overtimeUtils.js";
 import { COMMAND_UTILS, handleCommandUpdate } from "./commandService.js";
 import { openTools } from "../utils/buttons.js";
+import { fileURLToPath } from "url";
 
 export async function handleCheckIn(chat_id) {
   const currentDate = moment().format("YYYY-MM-DD");
@@ -38,7 +42,7 @@ export async function handleCheckIn(chat_id) {
 
   sendMessage(
     chat_id,
-    `Check-in berhasil pada waktu: ${checkInTime}. Jangan lupa ambil foto untuk dokumentasi.`
+    `Anda sedang melakukan Check-In. Foto sekarang untuk dokumentasi Check-In`
   );
   await handleCommandUpdate(chat_id, COMMAND_UTILS.CHECK_IN);
 }
@@ -78,7 +82,7 @@ export async function handleCheckOut(chat_id) {
 
   sendMessage(
     chat_id,
-    `Check-out berhasil pada waktu: ${checkOutTime}. Anda lembur sebanyak ${overtimeHours} jam. Jangan lupa ambil foto untuk dokumentasi.`
+    `Anda sedang melakukan Check-Out. Foto sekarang untuk dokumentasi Check-Out.`
   );
   await handleCommandUpdate(chat_id, COMMAND_UTILS.CHECK_OUT);
 }
@@ -134,3 +138,50 @@ export async function handleSickLeave(chat_id) {
   sendMessage(chat_id, "Silakan kirim alasan Anda tidak masuk kerja.");
   await handleCommandUpdate(chat_id, COMMAND_UTILS.SICK_LEAVE);
 }
+
+export const getRecapsForToday = async () => {
+  const query = `
+      SELECT u.full_name, r.check_in_time, r.check_in_image, r.check_out_time, r.check_out_image, r.is_absence, r.absence_reason
+      FROM recaps r
+      JOIN users u ON u.chat_id = r.chat_id
+      WHERE DATE(r.date) = CURDATE();
+  `;
+  const [rows] = await db.connection.query(query);
+  return rows;
+};
+
+export const generateExcel = async (recaps) => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Recaps Hari Ini");
+
+  // Menambahkan header
+  worksheet.columns = [
+    { header: "Nama Lengkap", key: "full_name", width: 30 },
+    { header: "Check In", key: "check_in_time", width: 15 },
+    { header: "Check In Image", key: "check_in_image", width: 25 },
+    { header: "Check Out", key: "check_out_time", width: 15 },
+    { header: "Check Out Image", key: "check_out_image", width: 25 },
+    { header: "Absen", key: "is_absence", width: 10 },
+    { header: "Alasan Absen", key: "absence_reason", width: 50 },
+  ];
+
+  // Menambahkan data ke dalam Excel
+  recaps.forEach((recap) => {
+    worksheet.addRow(recap);
+  });
+
+  const outputDir = path.join(process.cwd(), "output");
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
+
+  // Menyimpan file Excel
+  const filePath = path.join(
+    outputDir,
+    `recaps_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+  await workbook.xlsx.writeFile(filePath);
+
+  console.log(`File saved at: ${filePath}`);
+  return filePath;
+};

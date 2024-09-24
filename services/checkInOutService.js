@@ -27,7 +27,7 @@ export async function handleCheckInAdditional(chat_id, imageUrl) {
 
   sendMessage(
     chat_id,
-    `Check-in berhasil pada waktu: ${checkInTime}. Silahkan Bekerja.`
+    `Check-In berhasil pada waktu: ${checkInTime}. Silahkan Bekerja.`
   );
   await handleCommandUpdate(chat_id, "");
 }
@@ -56,7 +56,7 @@ export async function handleCheckOutAdditional(chat_id, imageUrl) {
 
   sendMessage(
     chat_id,
-    `Check-out berhasil pada waktu: ${checkOutTime}. Terima Kasih!.`
+    `Check-Out berhasil pada waktu: ${checkOutTime}. Terima Kasih!.`
   );
   await handleCommandUpdate(chat_id, "");
 }

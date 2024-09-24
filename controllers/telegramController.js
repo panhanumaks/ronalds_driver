@@ -5,9 +5,18 @@ import cron from "node-cron";
 import {
   handleCommand,
   handleCallbackQuery,
+  COMMAND_UTILS,
+  handleCommandUpdate,
 } from "../services/commandService.js";
-import { findUserByChatId, getAllChatIds } from "../services/userService.js";
+import {
+  findUserByChatId,
+  getAllChatIds,
+  getRecapsWithCheckInTime,
+  getRecapsWithCheckOutTime,
+} from "../services/userService.js";
 import { sendMessage } from "../services/telegramService.js";
+import { generateExcel, getRecapsForToday } from "../services/recapService.js";
+import { sendEmailWithAttachment } from "../services/nodemailerService.js";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
 const uploadDir = "./uploads/";
@@ -142,7 +151,9 @@ export const setWebhook = async (req, res) => {
   }
 };
 
-cron.schedule("0 0 * * *", deleteOldPhotos);
+cron.schedule("30 0 1 * *", deleteOldPhotos, {
+  timezone: "Asia/Jakarta",
+});
 
 cron.schedule(
   "0 6 * * *",
@@ -163,3 +174,58 @@ cron.schedule(
     timezone: "Asia/Jakarta", // Ensure it runs in WIB timezone
   }
 );
+
+cron.schedule("*/10 * * * *", async () => {
+  try {
+    const recapsWithCheckIn = await getRecapsWithCheckInTime();
+    console.log("Check-in recaps:", recapsWithCheckIn);
+
+    for (const recapWithCheckIn of recapsWithCheckIn) {
+      const message =
+        "Anda sedang melakukan Check-In. Foto sekarang untuk dokumentasi Check-In";
+
+      await sendMessage(recapWithCheckIn.chat_id, message);
+      await handleCommandUpdate(
+        recapWithCheckIn.chat_id,
+        COMMAND_UTILS.CHECK_IN
+      );
+    }
+
+    const recapsWithCheckOut = await getRecapsWithCheckOutTime();
+
+    for (const recapWithCheckOut of recapsWithCheckOut) {
+      const message =
+        "Anda sedang melakukan Check-Out. Foto sekarang untuk dokumentasi Check-Out.";
+
+      await sendMessage(recapWithCheckOut.chat_id, message);
+      await handleCommandUpdate(
+        recapWithCheckOut.chat_id,
+        COMMAND_UTILS.CHECK_OUT
+      );
+    }
+    console.log("Check-out recaps:", recapsWithCheckOut);
+  } catch (error) {
+    console.error("Error fetching check-in recaps:", error);
+  }
+});
+
+cron.schedule(
+  "0 0 * * *",
+  async () => {
+    try {
+      const recaps = await getRecapsForToday();
+      const filePath = await generateExcel(recaps);
+
+      await sendEmailWithAttachment(filePath);
+
+      console.log(`File Excel berhasil dibuat: ${filePath}`);
+    } catch (error) {
+      console.error("Error generating Excel file: ", error);
+    }
+  },
+  {
+    scheduled: true,
+    timezone: "Asia/Jakarta",
+  }
+);
+
