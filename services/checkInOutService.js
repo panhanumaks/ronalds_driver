@@ -12,7 +12,7 @@ export async function handleCheckInAdditional(chat_id, imageUrl) {
   }
 
   const currentDate = moment().format("YYYY-MM-DD");
-  const checkInTime = moment().format("HH:mm:ss");
+  const checkInTime = moment().format("YYYY-MM-DD HH:mm:ss");
 
   const query = `
     UPDATE recaps SET check_in_time = ?, check_in_image = ?, updated_at = NOW()
@@ -41,7 +41,20 @@ export async function handleCheckOutAdditional(chat_id, imageUrl) {
   }
 
   const currentDate = moment().format("YYYY-MM-DD");
-  const checkOutTime = moment().format("HH:mm:ss");
+  const checkOutTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+  const checkExistingQuery = `
+    SELECT * FROM recaps WHERE chat_id = ? AND date = ? AND check_in_time IS NOT NULL
+  `;
+
+  const [existingRows] = await db.connection.query(checkExistingQuery, [
+    chat_id,
+    currentDate,
+  ]);
+
+  if (existingRows.length === 0) {
+    currentDate = moment(currentDate).subtract(1, "days").format("YYYY-MM-DD");
+  }
 
   const query = `
     UPDATE recaps SET check_out_time = ?, check_out_image = ?, updated_at = NOW()

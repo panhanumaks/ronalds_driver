@@ -25,7 +25,7 @@ export async function handleCheckIn(chat_id) {
     );
   }
 
-  const checkInTime = moment().format("HH:mm:ss");
+  const checkInTime = moment().format("YYYY-MM-DD HH:mm:ss");
   let overtimeStart = isWeekend() ? checkInTime : null;
 
   const query = `
@@ -48,27 +48,39 @@ export async function handleCheckIn(chat_id) {
 }
 
 export async function handleCheckOut(chat_id) {
-  const currentDate = moment().format("YYYY-MM-DD");
+  let currentDate = moment().format("YYYY-MM-DD");
 
   const checkExistingQuery = `
       SELECT * FROM recaps WHERE chat_id = ? AND date = ? AND check_in_time IS NOT NULL
-    `;
+  `;
+
+  let result;
   const [existingRows] = await db.connection.query(checkExistingQuery, [
     chat_id,
     currentDate,
   ]);
 
-  if (existingRows.length === 0) {
-    return sendMessage(
+  result = existingRows;
+
+  if (result.length === 0) {
+    currentDate = moment(currentDate).subtract(1, "days").format("YYYY-MM-DD");
+    const [existingRows] = await db.connection.query(checkExistingQuery, [
       chat_id,
-      "Anda belum melakukan check-in, tidak bisa check-out."
-    );
+      currentDate,
+    ]);
+    result = existingRows;
+    if (result.length === 0) {
+      return sendMessage(
+        chat_id,
+        "Anda belum melakukan check-in, tidak bisa check-out."
+      );
+    }
   }
 
-  const checkOutTime = moment().format("HH:mm:ss");
-  const checkInTime = existingRows[0].check_in_time;
+  const checkOutTime = moment().format("YYYY-MM-DD HH:mm:ss");
+  const checkInTime = result[0].check_in_time;
 
-  let overtimeHours = calculateOvertime(checkInTime, checkOutTime);
+  let overtimeHours = calculateOvertime(checkInTime, checkOutTime, moment(currentDate).day());
 
   const query = `
       UPDATE recaps SET check_out_time = ?, overtime_hours = ?, updated_at = NOW() WHERE chat_id = ? AND date = ?

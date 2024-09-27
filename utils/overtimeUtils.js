@@ -1,19 +1,23 @@
+import moment from "moment";
+
 export function isWeekend() {
   const day = new Date().getDay();
   return day === 6 || day === 0;
 }
 
-export function calculateOvertime(checkInTime, checkOutTime, dayOfWeek) {
-  const [checkInHour, checkInMinute] = checkInTime.split(":").map(Number);
-  const [checkOutHour, checkOutMinute] = checkOutTime.split(":").map(Number);
+export function calculateOvertime(
+  checkInTimestamp,
+  checkOutTimestamp,
+  dayOfWeek
+) {
+  const checkInMoment = moment(checkInTimestamp);
+  const checkOutMoment = moment(checkOutTimestamp);
+
+  let totalWorkMinutes = checkOutMoment.diff(checkInMoment, "minutes");
 
   const workHoursLimit = 10;
   const normalWorkDuration = workHoursLimit * 60;
 
-  const checkInTotalMinutes = checkInHour * 60 + checkInMinute;
-  const checkOutTotalMinutes = checkOutHour * 60 + checkOutMinute;
-
-  let totalWorkMinutes = checkOutTotalMinutes - checkInTotalMinutes;
   let overtimeMinutes = 0;
 
   if (dayOfWeek >= 1 && dayOfWeek <= 5) {
