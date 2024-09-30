@@ -163,6 +163,19 @@ cron.schedule(
 
       for (const chat_id of chatIds) {
         const message = "/start";
+        const checkExistingQuery = `SELECT * FROM recaps WHERE chat_id = ? AND date = ? AND check_out_time IS NULL`;
+
+        const [existingRows] = await db.connection.query(checkExistingQuery, [
+          chat_id,
+          moment().subtract(1, "days").format("YYYY-MM-DD"),
+        ]);
+
+        if (existingRows.length > 0) {
+          sendMessage(
+            chat_id,
+            `Jam Lembur Anda tidak dihitung karena tidak melakukan Check-Out`
+          );
+        }
 
         await handleCommand(chat_id, message);
       }
@@ -228,4 +241,3 @@ cron.schedule(
     timezone: "Asia/Jakarta",
   }
 );
-
