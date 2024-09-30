@@ -77,21 +77,6 @@ export async function handleCheckOut(chat_id) {
     }
   }
 
-  const checkOutTime = moment().format("YYYY-MM-DD HH:mm:ss");
-  const checkInTime = result[0].check_in_time;
-
-  let overtimeHours = calculateOvertime(checkInTime, checkOutTime, moment(currentDate).day());
-
-  const query = `
-      UPDATE recaps SET check_out_time = ?, overtime_hours = ?, updated_at = NOW() WHERE chat_id = ? AND date = ?
-    `;
-  await db.connection.query(query, [
-    checkOutTime,
-    overtimeHours,
-    chat_id,
-    currentDate,
-  ]);
-
   sendMessage(
     chat_id,
     `Anda sedang melakukan Check-Out. Foto sekarang untuk dokumentasi Check-Out.`
