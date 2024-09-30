@@ -18,10 +18,8 @@ export async function handleSickLeaveAdditional(chat_id, reason) {
   ]);
 
   if (existingRows.length > 0) {
-    return sendMessage(
-      chat_id,
-      "Anda sudah check-in atau check-out, tidak bisa mengajukan izin sakit."
-    );
+    sendMessage(chat_id, "Silakan masukkan email atasan Anda.");
+    return await handleCommandUpdate(chat_id, COMMAND_UTILS.SICK_LEAVE_ADV);
   }
 
   const query = `
