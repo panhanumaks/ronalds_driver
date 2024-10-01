@@ -77,6 +77,14 @@ export async function handleCheckOut(chat_id) {
     }
   }
 
+  const checkOutTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+  const query = `
+      UPDATE recaps SET check_out_time = ?, updated_at = NOW() WHERE chat_id = ? AND date = ?
+    `;
+
+  await db.connection.query(query, [checkOutTime, chat_id, currentDate]);
+
   sendMessage(
     chat_id,
     `Anda sedang melakukan Check-Out. Foto sekarang untuk dokumentasi Check-Out.`
