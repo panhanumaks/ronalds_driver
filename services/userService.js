@@ -66,13 +66,18 @@ export const unblockUser = async (id) => {
 };
 
 export const getRecapsWithCheckInTime = async () => {
+  const currentDate = moment().format("YYYY-MM-DD");
+
   const query = `
           SELECT * FROM recaps 
           WHERE check_in_time IS NOT NULL 
           AND check_in_image IS NULL
-          AND TIMESTAMPDIFF(MINUTE, check_in_time, NOW()) > 10;
+          AND TIMESTAMPDIFF(MINUTE, check_in_time, NOW()) > 10
+          AND date = ?;
       `;
-  const [rows] = await db.connection.query(query);
+  const [rows] = await db.connection.query(query, {
+    currentDate,
+  });
   return rows;
 };
 
@@ -81,8 +86,11 @@ export const getRecapsWithCheckOutTime = async () => {
           SELECT * FROM recaps 
           WHERE check_out_time IS NOT NULL 
           AND check_out_image IS NULL
-          AND TIMESTAMPDIFF(MINUTE, check_out_time, NOW()) > 10;
+          AND TIMESTAMPDIFF(MINUTE, check_out_time, NOW()) > 10
+          AND date = ?;
       `;
-  const [rows] = await db.connection.query(query);
+  const [rows] = await db.connection.query(query, {
+    currentDate,
+  });
   return rows;
 };
