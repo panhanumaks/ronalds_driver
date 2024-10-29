@@ -94,25 +94,31 @@ export async function handleCheckOut(chat_id) {
     }
   }
 
-  const checkOutTime = moment().format("YYYY-MM-DD HH:mm:ss");
-  const checkInTime = moment(result[0].check_in_time).format("YYYY-MM-DD HH:mm:ss");
+  try {
+    const checkOutTime = moment().format("YYYY-MM-DD HH:mm:ss");
+    const checkInTime = moment(result[0].check_in_time).format(
+      "YYYY-MM-DD HH:mm:ss"
+    );
 
-  let overtimeHours = calculateOvertime(
-    checkInTime,
-    checkOutTime,
-    moment(currentDate).day()
-  );
+    let overtimeHours = calculateOvertime(
+      checkInTime,
+      checkOutTime,
+      moment(currentDate).day()
+    );
 
-  const query = `
-      UPDATE recaps SET check_out_time = ?, overtime_hours = ?, updated_at = NOW() WHERE chat_id = ? AND date = ?
-    `;
+    const query = `
+        UPDATE recaps SET check_out_time = ?, overtime_hours = ?, updated_at = NOW() WHERE chat_id = ? AND date = ?
+      `;
 
-  await db.connection.query(query, [
-    checkOutTime,
-    overtimeHours,
-    chat_id,
-    currentDate,
-  ]);
+    await db.connection.query(query, [
+      checkOutTime,
+      overtimeHours,
+      chat_id,
+      currentDate,
+    ]);
+  } catch (e) {
+    console.log(e);
+  }
 
   await db.connection.query(query, [checkOutTime, chat_id, currentDate]);
 
