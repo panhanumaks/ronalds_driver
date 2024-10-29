@@ -96,9 +96,7 @@ export async function handleCheckOut(chat_id) {
 
   try {
     const checkOutTime = moment().format("YYYY-MM-DD HH:mm:ss");
-    const checkInTime = moment(result[0].check_in_time).format(
-      "YYYY-MM-DD HH:mm:ss"
-    );
+    const checkInTime = result[0].check_in_time;
 
     let overtimeHours = calculateOvertime(
       checkInTime,
