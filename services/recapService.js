@@ -116,17 +116,17 @@ export async function handleCheckOut(chat_id) {
       chat_id,
       currentDate,
     ]);
+
+    await db.connection.query(query, [checkOutTime, chat_id, currentDate]);
+
+    sendMessage(
+      chat_id,
+      `Anda sedang melakukan Check-Out. Foto sekarang untuk dokumentasi Check-Out.`
+    );
+    await handleCommandUpdate(chat_id, COMMAND_UTILS.CHECK_OUT);
   } catch (e) {
     console.log(e);
   }
-
-  await db.connection.query(query, [checkOutTime, chat_id, currentDate]);
-
-  sendMessage(
-    chat_id,
-    `Anda sedang melakukan Check-Out. Foto sekarang untuk dokumentasi Check-Out.`
-  );
-  await handleCommandUpdate(chat_id, COMMAND_UTILS.CHECK_OUT);
 }
 
 export async function handleRecapInformation(chat_id) {
