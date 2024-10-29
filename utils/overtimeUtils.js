@@ -30,9 +30,11 @@ export function calculateOvertime(
 
   let overtimeHours = Math.floor(overtimeMinutes / 60);
 
-  const remainingMinutes = overtimeMinutes % 60;
-  if (remainingMinutes >= 15) {
-    overtimeHours += 1;
+  if (overtimeHours > 0) {
+    const remainingMinutes = overtimeMinutes % 60;
+    if (remainingMinutes >= 15) {
+      overtimeHours += 1;
+    }
   }
 
   return overtimeHours;
