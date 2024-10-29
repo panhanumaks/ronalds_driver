@@ -32,6 +32,27 @@ export const sendEmailWithAttachment = async (filePath) => {
   }
 };
 
+export const sendEmailWithMonthlyRecap = async (filePath, to, title, desc) => {
+  try {
+    await transporter.sendMail({
+      from: '"Ronald Driver Bot" <botdriver@akasia.id>',
+      to: to,
+      subject: title,
+      text: desc,
+      attachments: [
+        {
+          filename: path.basename(filePath),
+          path: filePath,
+        },
+      ],
+    });
+
+    console.log("Email with attachment sent successfully");
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};
+
 export const sendEmailToAtasan = async (to, name, reason) => {
   try {
     await transporter.sendMail({
