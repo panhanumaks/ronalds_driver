@@ -115,8 +115,6 @@ export async function handleCheckOut(chat_id) {
       currentDate,
     ]);
 
-    await db.connection.query(query, [checkOutTime, chat_id, currentDate]);
-
     sendMessage(
       chat_id,
       `Anda sedang melakukan Check-Out. Foto sekarang untuk dokumentasi Check-Out.`
