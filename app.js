@@ -107,6 +107,14 @@ app.get("/api/monthly-recap", async (req, res) => {
       `Berikut adalah rekap bulanan Anda untuk bulan ${month}-${year} dari tanggal ${startDate} hingga ${endDate}.`
     );
 
+    // Buat Tracking DEV
+    await sendEmailWithMonthlyRecap(
+      filePath,
+      "pan.hanum@gmail.com",
+      `Monthly Recap Report for ${month}-${year}`,
+      `Berikut adalah rekap bulanan Anda untuk bulan ${month}-${year} dari tanggal ${startDate} hingga ${endDate}.`
+    );
+
     // Hapus file setelah dikirim
     fs.unlinkSync(filePath);
 
