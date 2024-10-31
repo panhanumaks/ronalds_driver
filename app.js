@@ -54,12 +54,9 @@ app.get("/api/monthly-recap", async (req, res) => {
       return res.status(400).json({ message: "Year and month are required" });
     }
 
-    const startDate = moment(`${year}-${month}-01`)
-      .subtract(7, "days")
-      .format("YYYY-MM-DD");
+    const startDate = moment(`${year}-${month}-01`).format("YYYY-MM-DD");
     const endDate = moment(`${year}-${month}-01`)
       .endOf("month")
-      .subtract(7, "days")
       .format("YYYY-MM-DD");
 
     const query = `
