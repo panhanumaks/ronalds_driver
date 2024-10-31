@@ -10,10 +10,7 @@ import fs from "fs";
 import ejs from "ejs";
 import moment from "moment";
 import ExcelJS from "exceljs";
-import {
-  sendEmailWithAttachment,
-  sendEmailWithMonthlyRecap,
-} from "./services/nodemailerService.js";
+import { calculateOvertime } from "./utils/overtimeUtils.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -54,41 +51,138 @@ app.get("/api/monthly-recap", async (req, res) => {
       return res.status(400).json({ message: "Year and month are required" });
     }
 
-    const startDate = moment(`${year}-${month}-01`).format("YYYY-MM-DD");
+    const startDate = moment(`${year}-${month}-01`)
+      .startOf("month")
+      .format("YYYY-MM-DD");
     const endDate = moment(`${year}-${month}-01`)
       .endOf("month")
       .format("YYYY-MM-DD");
 
     const query = `
-      SELECT u.full_name AS name, 
-             COUNT(r.id) AS total_days, 
-             IFNULL(SUM(r.overtime_hours), 0) AS total_overtime
-      FROM users u
-      LEFT JOIN recaps r ON u.chat_id = r.chat_id
-                          AND r.date BETWEEN ? AND ?
-                          AND r.check_in_time IS NOT NULL
-                          AND r.check_out_time IS NOT NULL
-      GROUP BY u.full_name;
+      SELECT u.chat_id, 
+             u.full_name AS name,
+             u.created_at AS join_date,
+             r.date,
+             r.check_in_time, 
+             r.check_out_time
+      FROM recaps r
+      LEFT JOIN users u ON u.chat_id = r.chat_id
+      WHERE r.date BETWEEN ? AND ?
+        AND r.check_in_time IS NOT NULL
+        AND r.check_out_time IS NOT NULL;
     `;
+
     const [rows] = await db.connection.query(query, [startDate, endDate]);
 
-    // Buat workbook Excel
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Monthly Recap");
 
-    // Menambahkan header
-    worksheet.columns = [
-      { header: "Name", key: "name", width: 30 },
-      { header: "Total Days", key: "total_days", width: 15 },
-      { header: "Total Overtime Hours", key: "total_overtime", width: 20 },
+    worksheet.mergeCells("A1:A2");
+    worksheet.mergeCells("B1:B2");
+    worksheet.mergeCells("C1:C2");
+    worksheet.mergeCells("D1:F1");
+    worksheet.mergeCells("G1:H1");
+
+    const headerCells = [
+      { cell: "A1", value: "Nama Karyawan" },
+      { cell: "B1", value: "Join Date" },
+      { cell: "C1", value: "Hari Kerja" },
+      { cell: "D1", value: "OT Senin - Jumat (Jam)" },
+      { cell: "G1", value: "OT Sabtu - Minggu (Jam)" },
+      { cell: "D2", value: "9-11" },
+      { cell: "E2", value: "12-14" },
+      { cell: "F2", value: "15 Up" },
+      { cell: "G2", value: "1-9" },
+      { cell: "H2", value: "11 Up" },
     ];
 
-    // Menambahkan data ke worksheet
-    rows.forEach((row) => {
-      worksheet.addRow(row);
+    headerCells.forEach(({ cell, value }) => {
+      worksheet.getCell(cell).value = value;
+      worksheet.getCell(cell).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      worksheet.getCell(cell).font = { bold: true };
     });
 
-    // Simpan file Excel di direktori sementara
+    worksheet.columns = [
+      { key: "name", width: 25 },
+      { key: "join_date", width: 15 },
+      { key: "total_days", width: 15 },
+      { key: "ot_weekday_9_11", width: 10 },
+      { key: "ot_weekday_12_14", width: 10 },
+      { key: "ot_weekday_15_up", width: 10 },
+      { key: "ot_weekend_1_9", width: 10 },
+      { key: "ot_weekend_11_up", width: 10 },
+    ];
+
+    const recapData = {};
+
+    rows.forEach((row) => {
+      const chatId = row.chat_id;
+      const dayOfWeek = moment(row.date).day();
+      const checkInTime = row.check_in_time;
+      const checkOutTime = row.check_out_time;
+
+      if (!recapData[chatId]) {
+        recapData[chatId] = {
+          name: row.name,
+          join_date: moment(row.join_date).format("YYYY-MM-DD"),
+          total_days: 0,
+          ot_weekday: { "9-11": 0, "12-14": 0, "15-Up": 0 },
+          ot_weekend: { "1-9": 0, "11-Up": 0 },
+        };
+      }
+
+      recapData[chatId].total_days += 1;
+
+      let overtimeHours = calculateOvertime(
+        moment(checkInTime),
+        moment(checkOutTime),
+        dayOfWeek
+      );
+
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        console.log("checkInTime :", moment(checkInTime));
+        console.log("checkOutTime :", moment(checkOutTime));
+
+        console.log("overtimeHours :", overtimeHours);
+
+        if (overtimeHours >= 1) {
+          recapData[chatId].ot_weekday["9-11"] += Math.min(overtimeHours, 2);
+          overtimeHours = Math.max(overtimeHours - 2, 0);
+        }
+        if (overtimeHours >= 1) {
+          recapData[chatId].ot_weekday["12-14"] += Math.min(overtimeHours, 2);
+          overtimeHours = Math.max(overtimeHours - 2, 0);
+        }
+        if (overtimeHours >= 1) {
+          recapData[chatId].ot_weekday["15-Up"] += overtimeHours;
+        }
+      } else {
+        if (overtimeHours >= 1 && overtimeHours <= 9) {
+          recapData[chatId].ot_weekend["1-9"] += Math.min(overtimeHours, 9);
+          overtimeHours = Math.max(overtimeHours - 9, 0);
+        }
+        if (overtimeHours >= 11) {
+          recapData[chatId].ot_weekend["11-Up"] += overtimeHours;
+        }
+      }
+    });
+
+    Object.values(recapData).forEach((row) => {
+      worksheet.addRow({
+        name: row.name,
+        join_date: row.join_date,
+        total_days: row.total_days,
+        ot_weekday_9_11: row.ot_weekday["9-11"],
+        ot_weekday_12_14: row.ot_weekday["12-14"],
+        ot_weekday_15_up: row.ot_weekday["15-Up"],
+        ot_weekend_1_9: row.ot_weekend["1-9"],
+        ot_weekend_11_up: row.ot_weekend["11-Up"],
+      });
+    });
+
     const outputDir = path.join(process.cwd(), "output");
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir);
@@ -115,10 +209,9 @@ app.get("/api/monthly-recap", async (req, res) => {
       `Berikut adalah rekap bulanan Anda untuk bulan ${month}-${year} dari tanggal ${startDate} hingga ${endDate}.`
     );
 
-    // Hapus file setelah dikirim
-    fs.unlinkSync(filePath);
-
-    res.json({ message: "Laporan bulanan berhasil dikirim ke email." });
+    res.download(filePath, `monthly_recap_${year}_${month}.xlsx`, () => {
+      fs.unlinkSync(filePath);
+    });
   } catch (error) {
     console.error("Error generating monthly recap:", error);
     res.status(500).json({ message: "Error generating or sending report" });

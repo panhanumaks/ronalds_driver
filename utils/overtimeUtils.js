@@ -15,7 +15,7 @@ export function calculateOvertime(
 
   let totalWorkMinutes = checkOutMoment.diff(checkInMoment, "minutes");
 
-  const workHoursLimit = 10;
+  const workHoursLimit = 9;
   const normalWorkDuration = workHoursLimit * 60;
 
   let overtimeMinutes = 0;
