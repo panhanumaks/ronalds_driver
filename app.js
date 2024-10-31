@@ -53,9 +53,11 @@ app.get("/api/monthly-recap", async (req, res) => {
 
     const startDate = moment(`${year}-${month}-01`)
       .startOf("month")
+      .subtract(7, "days")
       .format("YYYY-MM-DD");
     const endDate = moment(`${year}-${month}-01`)
       .endOf("month")
+      .subtract(7, "days")
       .format("YYYY-MM-DD");
 
     const query = `
