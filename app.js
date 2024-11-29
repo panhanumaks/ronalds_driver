@@ -11,6 +11,7 @@ import ejs from "ejs";
 import moment from "moment";
 import ExcelJS from "exceljs";
 import { calculateOvertime } from "./utils/overtimeUtils.js";
+import { sendEmailWithMonthlyRecap } from "./services/nodemailerService.js";
 
 const app = express();
 const PORT = process.env.PORT;
